@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트 출석 관리 시스템</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Custom Smooth Transitions */
+        .badge-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .badge-btn:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 text-white p-2.5 rounded-xl shadow-md">
+                    <i class="fa-solid fa-clipboard-user text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 leading-tight">스마트 출석 관리 시스템</h1>
+                    <p class="text-xs text-slate-500">부원 및 학생 출석 현황을 효율적으로 관리하세요</p>
+                </div>
+            </div>
+            
+            <!-- Date Picker -->
+            <div class="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-lg border border-slate-200 w-full sm:w-auto">
+                <i class="fa-regular fa-calendar text-slate-500 ml-2"></i>
+                <input type="date" id="attendanceDate" class="bg-transparent text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer pr-2">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow space-y-8">
+
+        <!-- Dashboard Summary Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Total Members -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">전체 등록 인원</p>
+                    <h3 class="text-2xl font-extrabold text-slate-800 mt-1" id="statTotal">0명</h3>
+                </div>
+                <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+
+            <!-- Present -->
+            <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">출석</p>
+                    <h3 class="text-2xl font-extrabold text-emerald-700 mt-1" id="statPresent">0명</h3>
+                </div>
+                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+            </div>
+
+            <!-- Late -->
+            <div class="bg-white p-5 rounded-2xl border border-amber-100 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-amber-600 uppercase tracking-wider">지각</p>
+                    <h3 class="text-2xl font-extrabold text-amber-700 mt-1" id="statLate">0명</h3>
+                </div>
+                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-user-clock"></i>
+                </div>
+            </div>
+
+            <!-- Absent -->
+            <div class="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-rose-600 uppercase tracking-wider">결석</p>
+                    <h3 class="text-2xl font-extrabold text-rose-700 mt-1" id="statAbsent">0명</h3>
+                </div>
+                <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-user-xmark"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Attendance Rate Progress Bar -->
+        <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-semibold text-slate-700">오늘의 출석률</span>
+                <span class="text-sm font-bold text-blue-600" id="attendanceRateText">0%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                <div id="attendanceProgressBar" class="bg-blue-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </section>
+
+        <!-- Action Controls & Member Addition -->
+        <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-user-plus text-blue-600"></i> 새 구성원 추가
+            </h2>
+            <form id="addMemberForm" class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="memberName" placeholder="이름 (예: 홍길동)" required
+                       class="flex-grow px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <input type="text" id="memberRole" placeholder="소속 / 직책 (예: 개발팀 / 학생)"
+                       class="flex-grow px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> 추가하기
+                </button>
+            </form>
+        </section>
+
+        <!-- Member Attendance Table -->
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">출석 명부</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">상태 버튼을 클릭하여 출석 여부를 수시로 업데이트할 수 있습니다.</p>
+                </div>
+                <!-- Quick Set All Buttons -->
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="text-slate-400 font-medium">일괄 처리:</span>
+                    <button onclick="setAllStatus('present')" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition">전원 출석</button>
+                    <button onclick="setAllStatus('absent')" class="px-2.5 py-1 bg-rose-50 text-rose-700 rounded-lg border border-rose-200 hover:bg-rose-100 transition">전원 결석</button>
+                </div>
+            </div>
+
+            <!-- Table Area -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 text-xs font-semibold border-b border-slate-200">
+                            <th class="py-3.5 px-6">이름</th>
+                            <th class="py-3.5 px-6">소속 / 직책</th>
+                            <th class="py-3.5 px-6 text-center">출석 상태 선택</th>
+                            <th class="py-3.5 px-6 text-right">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="memberTableBody" class="divide-y divide-slate-100 text-sm">
+                        <!-- Dynamic Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State Display -->
+            <div id="emptyState" class="hidden text-center py-12 px-4">
+                <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                    <i class="fa-solid fa-users-slash"></i>
+                </div>
+                <p class="text-slate-600 font-medium">등록된 구성원이 없습니다.</p>
+                <p class="text-xs text-slate-400 mt-1">위의 양식을 작성하여 새로운 구성원을 추가해 보세요.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
+            © <span id="currentYear"></span> 출석 관리 시스템. LocalStorage 자동 저장 지원.
+        </div>
+    </footer>
+
+    <!-- App JavaScript Logic -->
+    <script>
+        // Data Structures
+        // members = [{ id: string, name: string, role: string }]
+        // attendanceRecords = { "YYYY-MM-DD": { [memberId]: 'present' | 'late' | 'absent' } }
+
+        let members = JSON.parse(localStorage.getItem('attendance_members')) || [
+            { id: '1', name: '김철수', role: '컴퓨터공학과' },
+            { id: '2', name: '이영희', role: '소프트웨어학과' },
+            { id: '3', name: '박민수', role: '인공지능학과' }
+        ];
+
+        let attendanceRecords = JSON.parse(localStorage.getItem('attendance_records')) || {};
+
+        // DOM Element References
+        const dateInput = document.getElementById('attendanceDate');
+        const memberTableBody = document.getElementById('memberTableBody');
+        const emptyState = document.getElementById('emptyState');
+        const addMemberForm = document.getElementById('addMemberForm');
+
+        // Dashboard Elements
+        const statTotal = document.getElementById('statTotal');
+        const statPresent = document.getElementById('statPresent');
+        const statLate = document.getElementById('statLate');
+        const statAbsent = document.getElementById('statAbsent');
+        const attendanceRateText = document.getElementById('attendanceRateText');
+        const attendanceProgressBar = document.getElementById('attendanceProgressBar');
+
+        // Initial setup
+        window.onload = function() {
+            // Set today's date in YYYY-MM-DD format
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+            // Initial Render
+            render();
+
+            // Event Listener for Date Change
+            dateInput.addEventListener('change', render);
+        };
+
+        // Save Data to Browser Storage
+        function saveData() {
+            localStorage.setItem('attendance_members', JSON.stringify(members));
+            localStorage.setItem('attendance_records', JSON.stringify(attendanceRecords));
+        }
+
+        // Add Member
+        addMemberForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nameInput = document.getElementById('memberName');
+            const roleInput = document.getElementById('memberRole');
+
+            const name = nameInput.value.trim();
+            const role = roleInput.value.trim() || '일반';
+
+            if (!name) return;
+
+            const newMember = {
+                id: Date.now().toString(),
+                name: name,
+                role: role
+            };
+
+            members.push(newMember);
+            saveData();
+
+            nameInput.value = '';
+            roleInput.value = '';
+
+            render();
+        });
+
+        // Delete Member
+        function deleteMember(id) {
+            members = members.filter(m => m.id !== id);
+            
+            // Clean up record entries
+            Object.keys(attendanceRecords).forEach(date => {
+                if (attendanceRecords[date][id]) {
+                    delete attendanceRecords[date][id];
+                }
+            });
+
+            saveData();
+            render();
+        }
+
+        // Update Member Attendance Status for Current Selected Date
+        function setStatus(memberId, status) {
+            const currentDate = dateInput.value;
+            if (!currentDate) return;
+
+            if (!attendanceRecords[currentDate]) {
+                attendanceRecords[currentDate] = {};
+            }
+
+            attendanceRecords[currentDate][memberId] = status;
+            saveData();
+            render();
+        }
+
+        // Set status for all members at once
+        function setAllStatus(status) {
+            const currentDate = dateInput.value;
+            if (!currentDate || members.length === 0) return;
+
+            if (!attendanceRecords[currentDate]) {
+                attendanceRecords[currentDate] = {};
+            }
+
+            members.forEach(m => {
+                attendanceRecords[currentDate][m.id] = status;
+            });
+
+            saveData();
+            render();
+        }
+
+        // Main Render Function
+        function render() {
+            const currentDate = dateInput.value;
+            const currentDayRecords = attendanceRecords[currentDate] || {};
+
+            // Clear Table
+            memberTableBody.innerHTML = '';
+
+            if (members.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            let presentCount = 0;
+            let lateCount = 0;
+            let absentCount = 0;
+
+            members.forEach(member => {
+                const status = currentDayRecords[member.id] || 'none';
+
+                if (status === 'present') presentCount++;
+                else if (status === 'late') lateCount++;
+                else if (status === 'absent') absentCount++;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-colors";
+
+                tr.innerHTML = `
+                    <td class="py-4 px-6 font-semibold text-slate-800">${escapeHtml(member.name)}</td>
+                    <td class="py-4 px-6 text-slate-500"><span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-xs font-medium">${escapeHtml(member.role)}</span></td>
+                    <td class="py-4 px-6">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="setStatus('${member.id}', 'present')" 
+                                class="badge-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 ${
+                                    status === 'present' 
+                                    ? 'bg-emerald-600 text-white shadow-sm' 
+                                    : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600'
+                                }">
+                                <i class="fa-solid fa-check"></i> 출석
+                            </button>
+                            <button onclick="setStatus('${member.id}', 'late')" 
+                                class="badge-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 ${
+                                    status === 'late' 
+                                    ? 'bg-amber-500 text-white shadow-sm' 
+                                    : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'
+                                }">
+                                <i class="fa-solid fa-clock"></i> 지각
+                            </button>
+                            <button onclick="setStatus('${member.id}', 'absent')" 
+                                class="badge-btn px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 ${
+                                    status === 'absent' 
+                                    ? 'bg-rose-600 text-white shadow-sm' 
+                                    : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600'
+                                }">
+                                <i class="fa-solid fa-xmark"></i> 결석
+                            </button>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        <button onclick="deleteMember('${member.id}')" class="text-slate-400 hover:text-rose-600 transition p-1.5 rounded-lg hover:bg-rose-50" title="삭제">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+
+                memberTableBody.appendChild(tr);
+            });
+
+            // Update Dashboard Statistics
+            const total = members.length;
+            statTotal.textContent = `${total}명`;
+            statPresent.textContent = `${presentCount}명`;
+            statLate.textContent = `${lateCount}명`;
+            statAbsent.textContent = `${absentCount}명`;
+
+            // Calculate Attendance Rate (Present + Late counted as positive attending attendance)
+            const rate = total > 0 ? Math.round(((presentCount + lateCount) / total) * 100) : 0;
+            attendanceRateText.textContent = `${rate}%`;
+            attendanceProgressBar.style.width = `${rate}%`;
+        }
+
+        // Utility: Prevent XSS
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+    </script>
+</body>
+</html>
